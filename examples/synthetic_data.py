@@ -63,6 +63,7 @@ funs = [sample_safe_fun() for _ in range(num_samples)]
 # Storage for the results
 reward_safe, reward_stage = [0.]*num_iterations, [0.]*num_iterations
 regret_safe, regret_stage = [0.]*num_iterations, [0.]*num_iterations
+safe_region_safe, safe_region_stage = [0.]*num_iterations, [0.]*num_iterations
 
 for i in range(num_samples):
 
@@ -90,10 +91,12 @@ for i in range(num_samples):
     safe_max_utility = np.max(safe_utility)
 
     # First query point
-    reward_safe[0] = safe_opt.get_maximum()[1]
-    reward_stage[0] = stage_opt.get_maximum()[1]
-    regret_safe[0] = safe_max_utility - safe_opt.get_maximum()[1]
-    regret_stage[0] = safe_max_utility - stage_opt.get_maximum()[1]
+    reward_safe[0] = (reward_safe[0] * i + safe_opt.get_maximum()[1]) / (i + 1)
+    reward_stage[0] = (reward_stage[0] * i + stage_opt.get_maximum()[1]) / (i + 1)
+    regret_safe[0] = (regret_safe[0] * i + (safe_max_utility - safe_opt.get_maximum()[1])) / (i + 1)
+    regret_stage[0] = (regret_stage[0] * i + (safe_max_utility - stage_opt.get_maximum()[1])) / (i + 1)
+    safe_region_safe[0] = (safe_region_safe[0] * i + np.sum(safe_opt.S)) / (i + 1)
+    safe_region_stage[0] = (safe_region_stage[0] * i + np.sum(stage_opt.S)) / (i + 1)
 
     for j in range(num_iterations - 1):
         # Obtain next query point
@@ -111,10 +114,11 @@ for i in range(num_samples):
         reward_stage[j + 1] = (reward_stage[j + 1] * i + stage_opt.get_maximum()[1]) / (i + 1)
         regret_safe[j + 1] = (regret_safe[j + 1] * i + (safe_max_utility - safe_opt.get_maximum()[1])) / (i + 1)
         regret_stage[j + 1] = (regret_stage[j + 1] * i + (safe_max_utility - stage_opt.get_maximum()[1])) / (i + 1)
+        safe_region_safe[j + 1] = (safe_region_safe[j + 1] * i + np.sum(safe_opt.S)) / (i + 1)
+        safe_region_stage[j + 1] = (safe_region_stage[j + 1] * i + np.sum(stage_opt.S)) / (i + 1)
 
     if (i + 1) % 5 == 0:
         print("Sample: ", i + 1)
-
 
 # Plot reward
 plt.figure(figsize=(12, 6))
@@ -140,4 +144,17 @@ plt.title('Regret vs Time step')
 plt.legend()
 plt.grid()
 plt.savefig('regret.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+# Plot safe region
+plt.figure(figsize=(12, 6))
+plt.plot(range(1, len(safe_region_safe) + 1), safe_region_safe, label='SafeOpt', color='blue')
+plt.plot(range(1, len(safe_region_stage) + 1), safe_region_stage, label='StageOpt', color='orange')
+plt.xticks(range(1, len(safe_region_safe) + 1), rotation=45)  # 设置横坐标刻度和旋转角度
+plt.xlabel('Time step')
+plt.ylabel('Safe Region')
+plt.title('Safe Region vs Time step')
+plt.legend()
+plt.grid()
+plt.savefig('safe_region.png', dpi=300, bbox_inches='tight')
 plt.show()
