@@ -363,13 +363,13 @@ class SafeOpt(GaussianProcessOptimization):
         else:
             self.inputs = self.parameter_set = parameter_set
 
-        self.liptschitz = lipschitz
+        self.lipschitz = lipschitz
 
-        if self.liptschitz is not None:
-            if not isinstance(self.liptschitz, list):
-                self.liptschitz = [self.liptschitz] * len(self.gps)
-            self.liptschitz = np.atleast_1d(
-                np.asarray(self.liptschitz).squeeze())
+        if self.lipschitz is not None:
+            if not isinstance(self.lipschitz, list):
+                self.lipschitz = [self.lipschitz] * len(self.gps)
+            self.lipschitz = np.atleast_1d(
+                np.asarray(self.lipschitz).squeeze())
 
         # Value intervals
         self.Q = np.empty((self.inputs.shape[0], 2 * len(self.gps)),
@@ -402,7 +402,7 @@ class SafeOpt(GaussianProcessOptimization):
 
     @use_lipschitz.setter
     def use_lipschitz(self, value):
-        if value and self.liptschitz is None:
+        if value and self.lipschitz is None:
             raise ValueError('Lipschitz constant not defined')
         self._use_lipschitz = value
 
@@ -568,7 +568,7 @@ class SafeOpt(GaussianProcessOptimization):
                         continue
                     # Safety: u - L * d >= fmin
                     G_safe[index] =\
-                        np.any(u[s, i][index] - self.liptschitz[i] * d >=
+                        np.any(u[s, i][index] - self.lipschitz[i] * d >=
                                self.fmin[i])
                     # Stop evaluating if not expander according to one
                     # safety constraint
